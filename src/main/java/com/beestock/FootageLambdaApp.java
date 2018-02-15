@@ -1,60 +1,80 @@
 package com.beestock;
 
-import com.beestock.transcoder.FootageTranscoder;
-import com.beestock.model.FootageFile;
-import com.beestock.model.Response;
-
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
+import com.beestock.exception.FileFormatNotSupportedException;
+import com.beestock.handler.TranscodeValidatedFootageHandler;
+import com.beestock.handler.ValidateUploadedFootageHandler;
+import com.beestock.models.FootageFile;
 
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
-import static com.beestock.enums.ResponseStatus.*;
 import static com.beestock.config.EnvironmentVars.*;
-import static com.amazonaws.services.s3.event.S3EventNotification.S3Entity;
 
+/**
+ * The {@code FootageLambdaApp} class a request handler for AWS Lambda function called handleRequest().
+ *
+ * It assumes to handle an input of type S3Event and return an output of type String
+ */
+public class FootageLambdaApp implements RequestHandler<S3Event, String> {
 
-public class FootageLambdaApp implements RequestHandler<S3Event, Response> {
+    private static Map<String, Consumer<FootageFile>> requestHandlerMap = new HashMap<>();
 
-    private final List<String> supportedFormats = Collections.singletonList("mp4");
+    private static final List<String> supportedInputFormatList = Arrays.asList(SUPPORTED_INPUT_FORMATS.split(","));
 
+    public static void main(String[] args) {  }
 
-    public static void main(String[]args){ System.out.println("Hello From Footage Lambda!"); }
+    /**
+     *
+     * @param s3Event an input event of type S3Event
+     * @param context allows you to access useful information available within the Lambda execution environment
+     * @return
+     */
+    public String handleRequest(S3Event s3Event, Context context) {
+        loadRequestHandlers();
 
+        FootageFile footageFile = new FootageFile(s3Event.getRecords().get(0).getS3());
 
-    public Response handleRequest(S3Event s3Event, Context context){
-        S3Entity s3 = s3Event.getRecords().get(0).getS3();
-
-        FootageFile file = new FootageFile(s3);
-        FootageTranscoder transcoder = new FootageTranscoder(file);
-
-        Response response;
-
-        if(!this.isFormatSupported(file)){
-            response = new Response(UNSUPPORTED_FORMAT);
-
-        } else if (s3.getBucket().getName().equals(BUCKET_FOOTAGE_UPLOADS)) {
-            transcoder.createValidationJob();
-
-            response = new Response(VALIDATION_JOB_CREATED);
-
-        } else if (s3.getBucket().getName().equals(BUCKET_FOOTAGE_VALIDATED)) {
-            transcoder.createTranscodeJob();
-
-            response = new Response(TRANSCODE_JOB_CREATED);
-
-        } else {
-            response = new Response(UNKNOWN_RESULT);
+        try {
+            assertFootageFileIsSupported(footageFile);
+        } catch (Exception e) {
+            return e.getMessage();
         }
 
-        System.out.println(response.getMessage());
+        runRequestHandler(footageFile);
 
-        return response;
+        return "DONE";
     }
 
-    private boolean isFormatSupported(FootageFile file){
-        return supportedFormats.contains(file.getFileExtension());
+    /**
+     * It loads requestHandlerMap object with the available footage handlers
+     */
+    private void loadRequestHandlers() {
+        requestHandlerMap.put(BUCKET_FOOTAGE_UPLOADS, ValidateUploadedFootageHandler::handle);
+        requestHandlerMap.put(BUCKET_FOOTAGE_VALIDATED, TranscodeValidatedFootageHandler::handle);
+    }
+
+    /**
+     * It runs the request handler from requestHandlerMap based on the footageFile bucket name
+     * @param footageFile an object containing information about directory, name, extension
+     */
+    private void runRequestHandler(FootageFile footageFile) {
+        requestHandlerMap.get(footageFile.getBucketName()).accept(footageFile);
+    }
+
+    /**
+     * This method holds all tests needed to be done on the footage file to be sure it matches the requirements
+     * @param footageFile an object containing information about directory, name, extension
+     * @throws FileFormatNotSupportedException throws a well message indicating the extension of footage file is note supported
+     */
+    private void assertFootageFileIsSupported(FootageFile footageFile) throws FileFormatNotSupportedException {
+        if (!supportedInputFormatList.contains(footageFile.getExtension())) {
+            throw new FileFormatNotSupportedException(footageFile.getExtension());
+        }
     }
 }

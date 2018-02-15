@@ -3,11 +3,18 @@ package com.beestock.config;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 
-import static com.beestock.config.EnvironmentVars.AWS_ACCESS_KEY_ID;
-import static com.beestock.config.EnvironmentVars.AWS_SECRET_ACCESS_KEY;
+/**
+ * AmazonTranscoderCredentials receives the AWS credentials through environment variables.
+ * It gives a provider that holds that AWS credentials.
+ */
+public class AmazonTranscoderCredentials {
+    private static final String AWS_ACCESS_KEY_ID      = System.getenv("ACCESS_KEY_ID");
+    private static final String AWS_SECRET_ACCESS_KEY  = System.getenv("SECRET_ACCESS_KEY");
 
-public class TranscoderCredentials {
-
+    /**
+     *
+     * @return an object that hold the AWSCredentials object
+     */
     public static AWSCredentialsProvider getCredentialsProvider () {
         return new AWSCredentialsProvider() {
             public AWSCredentials getCredentials() {
@@ -18,6 +25,10 @@ public class TranscoderCredentials {
         };
     }
 
+    /**
+     *
+     * @return an object with getters for AWSAccessKeyId and AWSSecretKey
+     */
     private static AWSCredentials getAWSCredentials() {
         return new AWSCredentials() {
             public String getAWSAccessKeyId() {

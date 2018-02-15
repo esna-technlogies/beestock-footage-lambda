@@ -1,16 +1,17 @@
 package com.beestock.config;
 
-import lombok.Data;
-
-@Data
+/**
+ * A class with static fields that hold environment variables being passed from AWS console
+ */
 public class EnvironmentVars {
-    public static final String TRANSCODER_REGION            = System.getenv("TRANSCODER_REGION");
-    public static final String AWS_ACCESS_KEY_ID            = System.getenv("ACCESS_KEY_ID");
-    public static final String AWS_SECRET_ACCESS_KEY        = System.getenv("SECRET_ACCESS_KEY");
-    public static final String AWS_REGION                   = System.getenv("REGION");
+    public static final String REGION                       = System.getenv("REGION");
     public static final String PIPELINE_ID                  = System.getenv("PIPELINE_ID");
     public static final String VALIDATION_PIPELINE_ID       = System.getenv("VALIDATION_PIPELINE_ID");
+    public static final String BUCKET_UNAPPROVED_FILES      = System.getenv("BUCKET_UNAPPROVED_FILES");
+    public static final String SUPPORTED_INPUT_FORMATS      = System.getenv("SUPPORTED_INPUT_FORMATS");
+    public static final String SUPPORTED_OUTPUT_FORMATS     = System.getenv("SUPPORTED_OUTPUT_FORMATS");
     public static final String BUCKET_FOOTAGE_UPLOADS       = System.getenv("BUCKET_FOOTAGE_UPLOADS");
     public static final String BUCKET_FOOTAGE_VALIDATED     = System.getenv("BUCKET_FOOTAGE_VALIDATED");
-    public static final String BUCKET_FOOTAGE_TRANSCODED    = System.getenv("BUCKET_FOOTAGE_TRANSCODED");
+    public static final String WATERMARK_ID                 = System.getenv("WATERMARK_ID");
+    public static final String WATERMARK_INPUT_KEY          = System.getenv("WATERMARK_INPUT_KEY");
 }
