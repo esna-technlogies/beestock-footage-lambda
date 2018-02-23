@@ -73,6 +73,7 @@ The main goal of this lambda function is to run [AWS Transcoder](https://docs.aw
       - Copy the code from simulate-footage-uploading/index.js to index.js on the console
         
     - Environment Variables:
+    
       | Name | Description |
       |------|-------------|
       | ACCESS_KEY_ID | AWS Access Key ID |
